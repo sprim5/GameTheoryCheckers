@@ -84,10 +84,24 @@ class Checkersstate(Gamestate):
             target = mv[1]
             self.field[start[0]][start[1]] = '-'
             self.field[target[0]][target[1]] = self.currentPlayer
+            # if abs(start[0] - target[0]) == 2 or abs(start[1] - target[1]) == 2:
+            #     if (start[0] - target[0] + start[1] - target[1]) % 2 == 0:
+            #         if self.field[start[0] - target[0]/2][start[1] - target[1]/2] != self.currentPlayer and self.field[start[0] - target[0]/2][start[1] - target[1]/2] != '-':
+            #             self.field[start[0] - target[0] / 2][start[1] - target[1] / 2] = '-'
+
             if abs(start[0] - target[0]) == 2 or abs(start[1] - target[1]) == 2:
-                if (start[0] - target[0] + start[1] - target[1]) % 2 == 0:
-                    if self.field[start[0] - target[0]/2][start[1] - target[1]/2] != self.currentPlayer and self.field[start[0] - target[0]/2][start[1] - target[1]/2] != '-':
-                        self.field[start[0] - target[0] / 2][start[1] - target[1] / 2] = '-'
+                betweenField = [0, 0]
+                if target[0] - start[0] == 2 or target[0] - start[0] == 1:
+                    betweenField[0] = 1
+                if target[0] - start[0] == -2 or target[0] - start[0] == -1:
+                    betweenField[0] = -1
+                if target[1] - start[1] == 2 or target[1] - start[1] == 1:
+                    betweenField[1] = 1
+                if target[1] - start[1] == -2 or target[1] - start[1] == -1:
+                    betweenField[1] = -1
+
+                if self.field[start[0] + betweenField[0]][start[1] + betweenField[1]] != self.currentPlayer and self.field[start[0] + betweenField[0]][start[1] + betweenField[1]] != '-':
+                    self.field[start[0] + betweenField[0]][start[1] + betweenField[1]] = '-'
 
             if self.currentPlayer == 'b':
                 self.currentPlayer = 'w'
@@ -147,18 +161,10 @@ class Checkersstate(Gamestate):
 
     def copyState(self):
         gs = Checkersstate()
-        field = ()
-        currentPlayer = 'w'
-        history = []
-        root = None
-        stateHistory = []
-        genStates = 0
-        gs.num = self.num
-        gs.lastChildMv = self.lastChildMv
-        gs.nextChildMv = self.nextChildMv
+        gs.field = deepcopy(self.field)
         gs.currentPlayer = self.currentPlayer
-        #        gs.history = deepcopy(self.history)   #deep copy
-        gs.history = self.history[:]  # shallow copy
+        gs.history = deepcopy(self.history)   #deep copy
+
         gs.stateHistory = deepcopy(self.stateHistory)
         gs.root = self.root
         return gs
@@ -187,6 +193,10 @@ class Checkersstate(Gamestate):
 
     def printState(self):
 
+        print(self.genStates)
+        print(self.history)
+        print(self.root)
+        print(self.stateHistory)
         for i in range (len(self.field)):
             out = ""
             for j in range(len(self.field[i])):

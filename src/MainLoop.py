@@ -4,6 +4,14 @@ from src.Checkersstate import Checkersstate
 
 game = Checkersstate()
 game.setStartState()
-print(game.getAllMoves())
 game.printState()
+print(game.getAllMoves())
+childStates = game.getAllChildStates()
+for i in range(len(childStates)):
+    childStates[i].printState()
+    nextChildStates = childStates[i].getAllChildStates()
+    for j in range(len(nextChildStates)):
+        print("\t")
+        nextChildStates[j].printState()
+    print("\n")
 print("Hello, World!")
