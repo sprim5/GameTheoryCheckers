@@ -1,7 +1,9 @@
 from copy import deepcopy
 
+from src.Evaluator import Evaluator
 from src.Gamestate import Gamestate
 class Checkersstate(Gamestate):
+
 
     field = ()
     currentPlayer = 'w'
@@ -9,6 +11,8 @@ class Checkersstate(Gamestate):
     root = None
     stateHistory = []
     genStates = 0
+    depth = 0
+
 
     def setStartState(self):
         self.field = (['w', 'w', 'w', 'w', 'w'],
@@ -20,15 +24,17 @@ class Checkersstate(Gamestate):
         self.genStates = 1
         self.history = []
         self.root = self
+        evalu = Checkersevaluator()
+        self.heuristicValue = evalu.heuristicValue(self)
         self.stateHistory.append([])
 
 
     def getAllMoves(self):
         ls = []
-        for y in range(len(self.field)-1):
-            for x in range(len(self.field[y]) - 1):
-                for tarY in range (5):
-                    for tarX in range (5):
+        for y in range(len(self.field)):
+            for x in range(len(self.field[y])):
+                for tarY in range (0,6):
+                    for tarX in range (0,6):
                         mv = [[x,y],[tarX+x-2,tarY+y-2]]
                         if self.possibleMove(mv):
                             ls.append(mv)
@@ -77,6 +83,7 @@ class Checkersstate(Gamestate):
     def doMove(self, mv):
         if self.possibleMove(mv):
             self.genStates += 1
+            self.depth += 1
             self.history.append(mv)
             self.stateHistory.append(deepcopy(self.history))
             #             print(self.stateHistory)
@@ -108,6 +115,8 @@ class Checkersstate(Gamestate):
             else:
                 self.currentPlayer = 'b'
 
+            evalu = Checkersevaluator()
+            self.heuristicValue = evalu.heuristicValue(self)
             if not (self == self.root):
                 self.root.genStates += 1
                 self.root.stateHistory.append(deepcopy(self.history))
@@ -164,7 +173,7 @@ class Checkersstate(Gamestate):
         gs.field = deepcopy(self.field)
         gs.currentPlayer = self.currentPlayer
         gs.history = deepcopy(self.history)   #deep copy
-
+        gs.depth = self.depth
         gs.stateHistory = deepcopy(self.stateHistory)
         gs.root = self.root
         return gs
@@ -177,23 +186,10 @@ class Checkersstate(Gamestate):
         else:
             return None
 
-    def equalState(self, other):
-        if not self.num == other.num:
-            return False
-        elif not self.lastChildMv == other.lastChildMv:
-            return False
-        elif not self.nextChildMv == other.nextChildMv:
-            return False
-        elif not self.firstPlayerToMove == other.firstPlayerToMove:
-            return False
-        elif not self.equalList(self.history, other.history):
-            return False
-        else:
-            return True
-
     def printState(self):
-
-        print(self.genStates)
+        print(self.currentPlayer)
+        print(self.heuristicValue)
+        print(self.depth)
         print(self.history)
         print(self.root)
         print(self.stateHistory)
@@ -202,3 +198,46 @@ class Checkersstate(Gamestate):
             for j in range(len(self.field[i])):
                 out += self.field[i][j]
             print(out)
+
+    def looseCondition(self):
+        return self.hasNextMove() == False
+
+class Checkersevaluator(Evaluator):
+
+    def heuristicValue(self, gs):
+        if not (isinstance(gs, Checkersstate)):
+             raise Exception("Illegal Argument")
+        else:
+            whiteValue = 0
+            blackValue = 0
+            for y in range(len(gs.field)):
+                for x in range(len(gs.field[y])):
+                    if gs.field[y][x] == 'w':
+                        whiteValue += self.getFieldValue(x,y, gs)
+                    elif gs.field[y][x] == 'b':
+                        blackValue += self.getFieldValue(x, y, gs)
+            return whiteValue - blackValue
+
+
+    def getMinValue(self):
+        return -1
+
+    def getMaxValue(self):
+        return 1
+
+    def exactValue(self, gs):
+        pass
+
+    def evaluate(self, gs):
+        pass
+
+    def getFieldValue(self, x, y, gs):
+        fieldValue = 10
+
+        for tarY in range(y-1,y+2):
+            for tarX in range(x-1,x+2):
+                if not (tarX < 0 or tarY < 0 or tarY >= len(gs.field) or tarX >= len(gs.field[tarY])):
+                    fieldValue -= 1
+        if fieldValue == 1:
+            fieldValue = 3
+        return fieldValue
