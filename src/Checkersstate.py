@@ -202,7 +202,34 @@ class Checkersstate(Gamestate):
     def looseCondition(self):
         return self.hasNextMove() == False
 
+    def heuristicMinimax(self, depth, factor):
+        childStates = self.getAllChildStates()
+        nextChild = 0
+        bestHeuristic = -1000
+
+        if depth == 0:
+            for i in range(len(childStates)):
+                if childStates[i].heuristicValue * factor > bestHeuristic:
+                    nextChild = i
+                    bestHeuristic = childStates[i].heuristicValue * factor
+
+            return childStates[nextChild]
+        else:
+            for i in range(len(childStates)):
+                value = childStates[i].heuristicMinimax(depth-1, factor*(-1)).heuristicValue
+                if  value * factor > bestHeuristic:
+                    nextChild = i
+                    bestHeuristic = value * factor
+                childStates[i].heuristicValue = value
+            return childStates[nextChild]
+
 class Checkersevaluator(Evaluator):
+    fieldValues =   ([5, 3, 3, 3, 5],
+                     [3, 0, 0, 0, 3],
+                     [3, 0, 0, 0, 3],
+                     [3, 0, 0, 0, 3],
+                     [5, 3, 3, 3, 5]
+                     )
 
     def heuristicValue(self, gs):
         if not (isinstance(gs, Checkersstate)):
@@ -213,9 +240,11 @@ class Checkersevaluator(Evaluator):
             for y in range(len(gs.field)):
                 for x in range(len(gs.field[y])):
                     if gs.field[y][x] == 'w':
-                        whiteValue += self.getFieldValue(x,y, gs)
+                        whiteValue += 8
+                        whiteValue += self.getFieldValue(x,y)
                     elif gs.field[y][x] == 'b':
-                        blackValue += self.getFieldValue(x, y, gs)
+                        blackValue += 8
+                        blackValue += self.getFieldValue(x, y)
             return whiteValue - blackValue
 
 
@@ -231,13 +260,5 @@ class Checkersevaluator(Evaluator):
     def evaluate(self, gs):
         pass
 
-    def getFieldValue(self, x, y, gs):
-        fieldValue = 10
-
-        for tarY in range(y-1,y+2):
-            for tarX in range(x-1,x+2):
-                if not (tarX < 0 or tarY < 0 or tarY >= len(gs.field) or tarX >= len(gs.field[tarY])):
-                    fieldValue -= 1
-        if fieldValue == 1:
-            fieldValue = 3
-        return fieldValue
+    def getFieldValue(self, x, y,):
+        return self.fieldValues[x][y]
